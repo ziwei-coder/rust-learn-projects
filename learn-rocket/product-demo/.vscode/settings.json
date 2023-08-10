@@ -1,0 +1,25 @@
+{
+  "cSpell.words": ["Insertable", "sqlx"],
+  "sqltools.connections": [
+    {
+      "pgOptions": {
+        "statement_timeout": 120,
+        "query_timeout": 120
+      },
+      "previewLimit": 50,
+      "server": "localhost",
+      "port": 5432,
+      "driver": "PostgreSQL",
+      "name": "postgres-products",
+      "database": "products",
+      "username": "panmin"
+    },
+    {
+      "previewLimit": 50,
+      "driver": "SQLite",
+      "database": "\\\\wsl.localhost\\Ubuntu\\home\\panmin\\dev\\learn-rocket\\product-demo\\db\\database.sqlite",
+      "name": "splite-products"
+    }
+  ],
+  "sqltools.useNodeRuntime": true
+}

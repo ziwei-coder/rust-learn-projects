@@ -1,0 +1,75 @@
+{
+  "client": "Thunder Client",
+  "collectionName": "Person state",
+  "dateExported": "2023-07-30T02:19:09.085Z",
+  "version": "1.1",
+  "folders": [],
+  "requests": [
+    {
+      "_id": "6a9b59de-9d6f-4c65-b462-b13a64501bb4",
+      "colId": "28a8a108-3250-4b69-9437-915eb10828fc",
+      "containerId": "",
+      "name": "Get person",
+      "url": "http://127.0.0.1:8000/person/2",
+      "method": "GET",
+      "sortNum": 20000,
+      "created": "2023-07-30T02:14:01.011Z",
+      "modified": "2023-07-30T02:18:22.696Z",
+      "headers": [],
+      "params": [],
+      "tests": []
+    },
+    {
+      "_id": "f71db235-c9c2-4a43-a3da-dc99a37246ec",
+      "colId": "28a8a108-3250-4b69-9437-915eb10828fc",
+      "containerId": "",
+      "name": "Delete Person",
+      "url": "http://127.0.0.1:8000/person/2",
+      "method": "DELETE",
+      "sortNum": 25000,
+      "created": "2023-07-30T02:17:43.622Z",
+      "modified": "2023-07-30T02:18:17.372Z",
+      "headers": [],
+      "params": [],
+      "tests": []
+    },
+    {
+      "_id": "1b970ade-5fee-44bb-a163-10a61bb83938",
+      "colId": "28a8a108-3250-4b69-9437-915eb10828fc",
+      "containerId": "",
+      "name": "Create Person",
+      "url": "http://127.0.0.1:8000/person/",
+      "method": "POST",
+      "sortNum": 30000,
+      "created": "2023-07-30T02:14:24.770Z",
+      "modified": "2023-07-30T02:17:35.697Z",
+      "headers": [],
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"id\": 2,\n  \"name\": \"Tom\",\n  \"age\": 1\n}",
+        "form": []
+      },
+      "tests": []
+    },
+    {
+      "_id": "1cd22b2f-d4f7-4dfc-8904-3e445cb420eb",
+      "colId": "28a8a108-3250-4b69-9437-915eb10828fc",
+      "containerId": "",
+      "name": "Update person",
+      "url": "http://127.0.0.1:8000/person/1",
+      "method": "PUT",
+      "sortNum": 40000,
+      "created": "2023-07-30T02:15:49.266Z",
+      "modified": "2023-07-30T02:16:45.051Z",
+      "headers": [],
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"id\": 1,\n  \"name\": \"Joy\",\n  \"age\": 3\n}",
+        "form": []
+      },
+      "tests": []
+    }
+  ]
+}

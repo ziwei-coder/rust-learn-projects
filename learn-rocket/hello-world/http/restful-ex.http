@@ -1,0 +1,22 @@
+### GET ex list
+GET http://127.0.0.1:8000/base/ex
+Accept: application/json
+
+### GET ex
+GET http://127.0.0.1:8000/base/ex/1
+Accept: application/json
+
+### POST ex
+POST http://127.0.0.1:8000/base/ex
+Accept: application/json
+Content-Type: text/plain
+
+### PUT ex
+PUT http://127.0.0.1:8000/base/ex/1
+Accept: application/json
+Content-Type: text/plain
+
+### DELETE ex
+PUT http://127.0.0.1:8000/base/ex/1
+Accept: application/json
+
