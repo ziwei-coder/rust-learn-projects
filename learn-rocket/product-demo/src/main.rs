@@ -1,11 +1,14 @@
 use rocket::serde::json::serde_json::json;
 use rocket::serde::json::Value;
 use rocket::serde::Serialize;
-use rocket::{futures, get, launch, routes};
+use rocket::{delete, get, launch, routes};
 
-use rocket_db_pools::{sqlx, Connection, Database};
+use rocket_db_pools::{Connection, Database};
 
-use futures::stream::TryStreamExt;
+mod models;
+mod repositories;
+
+use repositories::ProductsRepo;
 
 #[derive(Database)]
 #[database("sqlite_products")]
@@ -20,12 +23,8 @@ struct Product {
 }
 
 #[get("/")]
-async fn list(mut db: Connection<DB>) -> Value {
-    let products = sqlx::query_as::<_, Product>("SELECT id, title, description FROM products")
-        .fetch(&mut *db)
-        .map_ok(|record| record)
-        .try_collect::<Vec<_>>()
-        .await;
+async fn get_products(mut db: Connection<DB>) -> Value {
+    let products = ProductsRepo::find_all(&mut db).await;
 
     match products {
         Ok(data) => json!(data),
@@ -33,7 +32,29 @@ async fn list(mut db: Connection<DB>) -> Value {
     }
 }
 
+#[get("/<id>")]
+async fn get_product(mut db: Connection<DB>, id: i32) -> Value {
+    let product = ProductsRepo::find(&mut db, id).await;
+
+    match product {
+        Ok(data) => json!(data),
+        Err(e) => json!(e.to_string()),
+    }
+}
+
+#[delete("/<id>")]
+async fn delete_product(mut db: Connection<DB>, id: i32) -> Value {
+    let product = ProductsRepo::delete(&mut db, id).await;
+
+    match product {
+        Ok(data) => json!(data),
+        Err(e) => json!(e.to_string()),
+    }
+}
+
 #[launch]
 fn rocket() -> _ {
-    rocket::build().attach(DB::init()).mount("/", routes![list])
+    rocket::build()
+        .attach(DB::init())
+        .mount("/", routes![get_products, get_product, delete_product])
 }
