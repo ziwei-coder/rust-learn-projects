@@ -1,49 +1,53 @@
+use rocket::http::Status;
+use rocket::response::status;
 use rocket::serde::json::serde_json::json;
-use rocket::serde::json::Value;
-use rocket::serde::Serialize;
-use rocket::{delete, get, launch, routes};
+use rocket::serde::json::{Json, Value};
+use rocket::{delete, get, launch, post, routes};
 
 use rocket_db_pools::{Connection, Database};
 
 mod models;
 mod repositories;
 
+use models::NewProduct;
 use repositories::ProductsRepo;
 
 #[derive(Database)]
 #[database("sqlite_products")]
 struct DB(sqlx::SqlitePool);
 
-#[derive(sqlx::FromRow, Serialize)]
-#[serde(crate = "rocket::serde")]
-struct Product {
-    id: i32,
-    title: String,
-    description: String,
+type ResResult = Result<Value, status::Custom<Value>>;
+
+fn handle_query<T, E>(result: Result<T, E>) -> ResResult
+where
+    T: rocket::serde::Serialize,
+    E: std::fmt::Display,
+{
+    result
+        .map(|data| json!(data))
+        .map_err(|e| status::Custom(Status::InternalServerError, json!(e.to_string())))
 }
 
 #[get("/")]
-async fn get_products(mut db: Connection<DB>) -> Value {
+async fn get_products(mut db: Connection<DB>) -> ResResult {
     let products = ProductsRepo::find_all(&mut db).await;
-
-    match products {
-        Ok(data) => json!(data),
-        Err(e) => json!(e.to_string()),
-    }
+    handle_query(products)
 }
 
 #[get("/<id>")]
-async fn get_product(mut db: Connection<DB>, id: i32) -> Value {
+async fn view_product(mut db: Connection<DB>, id: i64) -> ResResult {
     let product = ProductsRepo::find(&mut db, id).await;
+    handle_query(product)
+}
 
-    match product {
-        Ok(data) => json!(data),
-        Err(e) => json!(e.to_string()),
-    }
+#[post("/", format = "json", data = "<new_product>")]
+async fn create_product(mut db: Connection<DB>, new_product: Json<NewProduct>) -> ResResult {
+    let result = ProductsRepo::save(&mut db, new_product.into_inner()).await;
+    handle_query(result)
 }
 
 #[delete("/<id>")]
-async fn delete_product(mut db: Connection<DB>, id: i32) -> Value {
+async fn delete_product(mut db: Connection<DB>, id: i64) -> Value {
     let product = ProductsRepo::delete(&mut db, id).await;
 
     match product {
@@ -54,7 +58,8 @@ async fn delete_product(mut db: Connection<DB>, id: i32) -> Value {
 
 #[launch]
 fn rocket() -> _ {
-    rocket::build()
-        .attach(DB::init())
-        .mount("/", routes![get_products, get_product, delete_product])
+    rocket::build().attach(DB::init()).mount(
+        "/product",
+        routes![get_products, view_product, create_product, delete_product],
+    )
 }

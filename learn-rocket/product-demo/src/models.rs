@@ -1,9 +1,16 @@
-use rocket::serde::Serialize;
+use rocket::serde::{Deserialize, Serialize};
 
 #[derive(Serialize, sqlx::FromRow)]
 #[serde(crate = "rocket::serde")]
 pub struct Product {
-    id: i32,
-    title: String,
-    description: String,
+    pub id: i64,
+    pub title: String,
+    pub description: String,
+}
+
+#[derive(Deserialize, sqlx::FromRow)]
+#[serde(crate = "rocket::serde")]
+pub struct NewProduct {
+    pub title: String,
+    pub description: Option<String>,
 }
