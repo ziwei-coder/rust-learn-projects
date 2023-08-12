@@ -2,7 +2,7 @@ use rocket::http::Status;
 use rocket::response::status;
 use rocket::serde::json::serde_json::json;
 use rocket::serde::json::{Json, Value};
-use rocket::{delete, get, launch, post, routes};
+use rocket::{delete, get, launch, post, put, routes};
 
 use rocket_db_pools::{Connection, Database};
 
@@ -52,6 +52,16 @@ async fn create_products(mut db: Connection<DB>, new_products: Json<Vec<NewProdu
     handle_query(result)
 }
 
+#[put("/<id>", format = "json", data = "<new_product>")]
+async fn update_product(
+    mut db: Connection<DB>,
+    id: i64,
+    new_product: Json<NewProduct>,
+) -> ResResult {
+    let result = ProductsRepo::update(&mut db, id, new_product.into_inner()).await;
+    handle_query(result)
+}
+
 #[delete("/<id>")]
 async fn delete_product(mut db: Connection<DB>, id: i64) -> Value {
     let product = ProductsRepo::delete(&mut db, id).await;
@@ -71,6 +81,7 @@ fn rocket() -> _ {
             get_products,
             create_product,
             create_products,
+            update_product,
             delete_product
         ],
     )
