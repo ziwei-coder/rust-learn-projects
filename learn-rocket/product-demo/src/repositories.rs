@@ -13,15 +13,6 @@ type QueryResult<T> = Result<T, Error>;
 pub struct ProductsRepo;
 
 impl ProductsRepo {
-    pub async fn find_all(c: &mut Conn) -> QueryResult<Vec<Product>> {
-        let sql = "SELECT id, title, description FROM products";
-
-        sqlx::query_as::<_, Product>(sql)
-            .fetch(c)
-            .try_collect::<Vec<_>>()
-            .await
-    }
-
     pub async fn find(c: &mut Conn, id: i64) -> QueryResult<Product> {
         let sql = "SELECT * FROM products where id = ?";
 
@@ -31,17 +22,37 @@ impl ProductsRepo {
             .await
     }
 
-    pub async fn save(c: &mut Conn, new_product: NewProduct) -> QueryResult<Product> {
+    pub async fn find_all(c: &mut Conn) -> QueryResult<Vec<Product>> {
+        let sql = "SELECT id, title, description FROM products";
+
+        sqlx::query_as::<_, Product>(sql)
+            .fetch(c)
+            .try_collect::<Vec<_>>()
+            .await
+    }
+
+    pub async fn create(c: &mut Conn, product: NewProduct) -> QueryResult<Product> {
         let sql = "INSERT INTO products (title, description) VALUES (?, ?)";
 
         let result = sqlx::query(sql)
-            .bind(new_product.title)
-            .bind(new_product.description.map_or(String::new(), |desc| desc))
+            .bind(product.title)
+            .bind(product.description.map_or(String::new(), |desc| desc))
             .execute(&mut *c)
             .await?;
 
         let last_id: i64 = Self::last_id(&result)?;
         Self::find(c, last_id).await
+    }
+
+    pub async fn create_all(c: &mut Conn, products: Vec<NewProduct>) -> QueryResult<Vec<Product>> {
+        let mut result = vec![];
+
+        for ele in products {
+            let product = Self::create(c, ele).await?;
+            result.push(product);
+        }
+
+        Ok(result)
     }
 
     pub fn update() -> QueryResult<Product> {

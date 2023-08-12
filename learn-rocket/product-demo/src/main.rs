@@ -28,21 +28,27 @@ where
         .map_err(|e| status::Custom(Status::InternalServerError, json!(e.to_string())))
 }
 
-#[get("/")]
-async fn get_products(mut db: Connection<DB>) -> ResResult {
-    let products = ProductsRepo::find_all(&mut db).await;
-    handle_query(products)
-}
-
 #[get("/<id>")]
 async fn view_product(mut db: Connection<DB>, id: i64) -> ResResult {
     let product = ProductsRepo::find(&mut db, id).await;
     handle_query(product)
 }
 
+#[get("/")]
+async fn get_products(mut db: Connection<DB>) -> ResResult {
+    let products = ProductsRepo::find_all(&mut db).await;
+    handle_query(products)
+}
+
 #[post("/", format = "json", data = "<new_product>")]
 async fn create_product(mut db: Connection<DB>, new_product: Json<NewProduct>) -> ResResult {
-    let result = ProductsRepo::save(&mut db, new_product.into_inner()).await;
+    let result = ProductsRepo::create(&mut db, new_product.into_inner()).await;
+    handle_query(result)
+}
+
+#[post("/list", format = "json", data = "<new_products>")]
+async fn create_products(mut db: Connection<DB>, new_products: Json<Vec<NewProduct>>) -> ResResult {
+    let result = ProductsRepo::create_all(&mut db, new_products.into_inner()).await;
     handle_query(result)
 }
 
@@ -60,6 +66,12 @@ async fn delete_product(mut db: Connection<DB>, id: i64) -> Value {
 fn rocket() -> _ {
     rocket::build().attach(DB::init()).mount(
         "/product",
-        routes![get_products, view_product, create_product, delete_product],
+        routes![
+            view_product,
+            get_products,
+            create_product,
+            create_products,
+            delete_product
+        ],
     )
 }
