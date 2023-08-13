@@ -1,20 +1,20 @@
 use rocket::http::Status;
 use rocket::response::status;
-use rocket::serde::json::{json, Json, Value};
-use rocket::{catch, catchers, delete, get, post, put, routes};
-use rocket_sync_db_pools::database;
+use rocket::serde::json::serde_json::json;
+use rocket::serde::json::{Json, Value};
+use rocket::{delete, get, post, put, routes};
 
-mod basic_auth;
+use rocket_db_pools::{Connection, Database};
+
 mod models;
 mod repositories;
-mod schema;
 
-use basic_auth::BasicAuth;
-use models::{NewProduct, Product};
-use repositories::ProductRepo;
+use models::NewProduct;
+use repositories::ProductsRepo;
 
-#[database("sqlite_path")]
-struct DB(diesel::SqliteConnection);
+#[derive(Database)]
+#[database("sqlite_products")]
+struct DB(sqlx::SqlitePool);
 
 type ResResult = Result<Value, status::Custom<Value>>;
 
@@ -28,71 +28,65 @@ where
         .map_err(|e| status::Custom(Status::InternalServerError, json!(e.to_string())))
 }
 
-#[get("/")]
-async fn get_products(_auth: BasicAuth, db: DB) -> ResResult {
-    db.run(|conn| {
-        let products = ProductRepo::find_all(conn);
-        handle_query(products)
-    })
-    .await
+#[get("/<id>")]
+async fn view_product(mut db: Connection<DB>, id: i64) -> ResResult {
+    let product = ProductsRepo::find(&mut db, id).await;
+    handle_query(product)
 }
 
-#[get("/<id>")]
-async fn view_product(_auth: BasicAuth, db: DB, id: i32) -> ResResult {
-    db.run(move |conn| {
-        let product = ProductRepo::find(conn, id);
-        handle_query(product)
-    })
-    .await
+#[get("/")]
+async fn get_products(mut db: Connection<DB>) -> ResResult {
+    let products = ProductsRepo::find_all(&mut db).await;
+    handle_query(products)
 }
 
 #[post("/", format = "json", data = "<new_product>")]
-async fn create_product(_auth: BasicAuth, db: DB, new_product: Json<NewProduct>) -> ResResult {
-    db.run(|conn| {
-        let result = ProductRepo::create(conn, new_product.into_inner());
-        handle_query(result)
-    })
-    .await
+async fn create_product(mut db: Connection<DB>, new_product: Json<NewProduct>) -> ResResult {
+    let result = ProductsRepo::create(&mut db, new_product.into_inner()).await;
+    handle_query(result)
 }
 
-#[put("/<_id>", format = "json", data = "<product>")]
-async fn update_product(_auth: BasicAuth, db: DB, _id: i32, product: Json<Product>) -> ResResult {
-    db.run(move |conn| {
-        let result = ProductRepo::update(conn, product.into_inner());
-        handle_query(result)
-    })
-    .await
+#[post("/list", format = "json", data = "<new_products>")]
+async fn create_products(mut db: Connection<DB>, new_products: Json<Vec<NewProduct>>) -> ResResult {
+    let result = ProductsRepo::create_all(&mut db, new_products.into_inner()).await;
+    handle_query(result)
+}
+
+#[put("/<id>", format = "json", data = "<new_product>")]
+async fn update_product(
+    mut db: Connection<DB>,
+    id: i64,
+    new_product: Json<NewProduct>,
+) -> ResResult {
+    let result = ProductsRepo::update(&mut db, id, new_product.into_inner()).await;
+    handle_query(result)
 }
 
 #[delete("/<id>")]
-async fn delete_product(_auth: BasicAuth, db: DB, id: i32) -> ResResult {
-    db.run(move |conn| {
-        let result = ProductRepo::delete(conn, id);
-        handle_query(result)
-    })
-    .await
-}
+async fn delete_product(mut db: Connection<DB>, id: i64) -> Value {
+    let product = ProductsRepo::delete(&mut db, id).await;
 
-#[catch(404)]
-async fn not_found_url() -> Value {
-    json!("not found!")
+    match product {
+        Ok(data) => json!(data),
+        Err(e) => json!(e.to_string()),
+    }
 }
 
 #[rocket::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<(), rocket::Error> {
     rocket::build()
+        .attach(DB::init())
         .mount(
             "/product",
             routes![
-                get_products,
                 view_product,
+                get_products,
                 create_product,
+                create_products,
                 update_product,
                 delete_product
             ],
         )
-        .register("/", catchers![not_found_url])
-        .attach(DB::fairing())
         .launch()
         .await?;
 

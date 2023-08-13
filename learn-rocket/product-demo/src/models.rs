@@ -1,21 +1,16 @@
-use crate::schema::products;
-use diesel::{AsChangeset, Insertable, Queryable};
 use rocket::serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize, Queryable, AsChangeset)]
+#[derive(Serialize, sqlx::FromRow)]
 #[serde(crate = "rocket::serde")]
 pub struct Product {
-    pub id: i32,
+    pub id: i64,
     pub title: String,
     pub description: String,
-    #[serde(skip_deserializing)]
-    pub create_at: String,
 }
 
-#[derive(Insertable, Deserialize)]
+#[derive(Deserialize, sqlx::FromRow)]
 #[serde(crate = "rocket::serde")]
-#[diesel(table_name = products)]
 pub struct NewProduct {
     pub title: String,
-    pub description: String,
+    pub description: Option<String>,
 }

@@ -1,47 +1,75 @@
-use diesel::prelude::*;
+use rocket::futures::TryStreamExt;
+use sqlx::{error::Error, pool::PoolConnection, sqlite::Sqlite};
 
 use crate::models::{NewProduct, Product};
-use crate::schema::products;
 
-pub struct ProductRepo;
+type Conn = PoolConnection<Sqlite>;
+type QueryResult<T> = Result<T, Error>;
 
-impl ProductRepo {
-    pub fn find_all(c: &mut SqliteConnection) -> QueryResult<Vec<Product>> {
-        products::table.limit(100).load::<Product>(c)
+pub struct ProductsRepo;
+
+impl ProductsRepo {
+    pub async fn find(c: &mut Conn, id: i64) -> QueryResult<Product> {
+        let sql = "SELECT * FROM products where id = ?";
+
+        sqlx::query_as::<_, Product>(sql)
+            .bind(id)
+            .fetch_one(c)
+            .await
     }
 
-    pub fn find(c: &mut SqliteConnection, id: i32) -> QueryResult<Product> {
-        products::table.find(id).get_result::<Product>(c)
+    pub async fn find_all(c: &mut Conn) -> QueryResult<Vec<Product>> {
+        let sql = "SELECT id, title, description FROM products";
+
+        sqlx::query_as::<_, Product>(sql)
+            .fetch(c)
+            .try_collect::<Vec<_>>()
+            .await
     }
 
-    pub fn create(c: &mut SqliteConnection, new_product: NewProduct) -> QueryResult<Product> {
-        diesel::insert_into(products::table)
-            .values(new_product)
-            .execute(c)?;
+    pub async fn create(c: &mut Conn, product: NewProduct) -> QueryResult<Product> {
+        let sql = "INSERT INTO products (title, description) VALUES (?, ?)";
 
-        let last_id = Self::last_id(c)?;
-        Self::find(c, last_id)
+        let result = sqlx::query(sql)
+            .bind(product.title)
+            .bind(product.description.map_or(String::new(), |desc| desc))
+            .execute(c.as_mut())
+            .await?;
+
+        let last_id: i64 = result.last_insert_rowid();
+        Self::find(c, last_id).await
     }
 
-    pub fn update(c: &mut SqliteConnection, product: Product) -> QueryResult<Product> {
-        diesel::update(products::table.find(product.id))
-            .set((
-                products::title.eq(product.title.to_owned()),
-                products::description.eq(product.description.to_owned()),
-            ))
-            .execute(c)?;
+    pub async fn create_all(c: &mut Conn, products: Vec<NewProduct>) -> QueryResult<Vec<Product>> {
+        let mut result = vec![];
 
-        Self::find(c, product.id)
+        for ele in products {
+            let product = Self::create(c, ele).await?;
+            result.push(product);
+        }
+
+        Ok(result)
     }
 
-    pub fn delete(c: &mut SqliteConnection, id: i32) -> QueryResult<usize> {
-        diesel::delete(products::table.find(id)).execute(c)
+    pub async fn update(c: &mut Conn, id: i64, product: NewProduct) -> QueryResult<Product> {
+        let sql = "UPDATE products SET title = ?, description = ? WHERE id = ?";
+
+        sqlx::query(sql)
+            .bind(product.title)
+            .bind(product.description.map_or(String::new(), |desc| desc))
+            .bind(id)
+            .execute(c.as_mut())
+            .await?;
+
+        Self::find(c, id).await
     }
 
-    fn last_id(c: &mut SqliteConnection) -> QueryResult<i32> {
-        products::table
-            .select(products::id)
-            .order(products::id.desc())
-            .first(c)
+    pub async fn delete(c: &mut Conn, id: i64) -> QueryResult<Product> {
+        let product = Self::find(c, id).await?;
+
+        let sql = format!("DELETE FROM products where id = {id}");
+        sqlx::query(&sql).execute(c).await?;
+
+        Ok(product)
     }
 }

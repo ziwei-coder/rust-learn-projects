@@ -1,2 +1,5 @@
-[global.databases]
-sqlite_path = { url = "./db/database.sqlite" }
+[default]
+port = 8003
+
+[default.databases.sqlite_products]
+url = "./db/database.sqlite"
