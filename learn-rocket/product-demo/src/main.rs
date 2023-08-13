@@ -2,7 +2,7 @@ use rocket::http::Status;
 use rocket::response::status;
 use rocket::serde::json::serde_json::json;
 use rocket::serde::json::{Json, Value};
-use rocket::{delete, get, launch, post, put, routes};
+use rocket::{delete, get, post, put, routes};
 
 use rocket_db_pools::{Connection, Database};
 
@@ -72,17 +72,23 @@ async fn delete_product(mut db: Connection<DB>, id: i64) -> Value {
     }
 }
 
-#[launch]
-fn rocket() -> _ {
-    rocket::build().attach(DB::init()).mount(
-        "/product",
-        routes![
-            view_product,
-            get_products,
-            create_product,
-            create_products,
-            update_product,
-            delete_product
-        ],
-    )
+#[rocket::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    rocket::build()
+        .attach(DB::init())
+        .mount(
+            "/product",
+            routes![
+                view_product,
+                get_products,
+                create_product,
+                create_products,
+                update_product,
+                delete_product
+            ],
+        )
+        .launch()
+        .await?;
+
+    Ok(())
 }
