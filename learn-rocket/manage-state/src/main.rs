@@ -83,7 +83,7 @@ async fn delete_person(id: usize, state: Context<'_>) -> Value {
 }
 
 #[rocket::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<(), rocket::Error> {
     rocket::build()
         .manage(PersonItems::new(HashMap::new()))
         .mount(

@@ -73,7 +73,7 @@ async fn delete_product(mut db: Connection<DB>, id: i64) -> Value {
 }
 
 #[rocket::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<(), rocket::Error> {
     rocket::build()
         .attach(DB::init())
         .mount(
