@@ -1,8 +1,10 @@
+use rocket::fairing::AdHoc;
 use rocket::http::Status;
+use rocket::log::private::error;
 use rocket::response::status;
 use rocket::serde::json::serde_json::json;
 use rocket::serde::json::{Json, Value};
-use rocket::{delete, get, post, put, routes};
+use rocket::{delete, fairing, get, post, put, routes, Build, Rocket};
 
 use rocket_db_pools::{Connection, Database};
 
@@ -72,10 +74,24 @@ async fn delete_product(mut db: Connection<DB>, id: i64) -> Value {
     }
 }
 
+async fn run_migrations(rocket: Rocket<Build>) -> fairing::Result {
+    match DB::fetch(&rocket) {
+        Some(db) => match sqlx::migrate!().run(&**db).await {
+            Ok(_) => Ok(rocket),
+            Err(e) => {
+                error!("Failed to initialize SQLX database: {}", e);
+                Err(rocket)
+            }
+        },
+        None => Err(rocket),
+    }
+}
+
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> {
     rocket::build()
         .attach(DB::init())
+        .attach(AdHoc::try_on_ignite("SQLX Migrations", run_migrations))
         .mount(
             "/product",
             routes![
