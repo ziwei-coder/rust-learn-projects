@@ -2,4 +2,4 @@
 port = 8003
 
 [default.databases.sqlite_products]
-url = "./db/database.sqlite"
+url = "/home/panmin/dev/rust-learn-projects/learn-rocket/product-demo/db/database.sqlite"
