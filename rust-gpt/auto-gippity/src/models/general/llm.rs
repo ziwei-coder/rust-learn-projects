@@ -1,30 +1,45 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Clone)]
-pub struct Message<'a> {
-    role: &'a str,
-    content: &'a str,
+pub struct Message {
+    pub role: String,
+    pub content: String,
 }
 
-impl<'a> Message<'a> {
-    pub fn new(role: &'a str, content: &'a str) -> Self {
+impl Message {
+    pub fn new(role: String, content: String) -> Self {
         Self { role, content }
     }
 }
 
 #[derive(Debug, Serialize, Clone)]
-pub struct ChatCompletion<'a> {
-    model: &'a str,
-    messages: Vec<Message<'a>>,
+pub struct ChatCompletion {
+    model: String,
+    messages: Vec<Message>,
     temperature: f32,
 }
 
-impl<'a> ChatCompletion<'a> {
-    pub fn new(model: &'a str, messages: Vec<Message<'a>>, temperature: f32) -> Self {
+impl ChatCompletion {
+    pub fn new(model: String, messages: Vec<Message>, temperature: f32) -> Self {
         Self {
             model,
             messages,
             temperature,
         }
     }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct APIMessage {
+    pub content: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct APIChoice {
+    pub message: APIMessage,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct APIResponse {
+    pub choices: Vec<APIChoice>,
 }

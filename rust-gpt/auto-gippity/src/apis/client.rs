@@ -2,6 +2,7 @@ use reqwest::header::{HeaderMap, HeaderValue};
 use reqwest::Client;
 
 use crate::helpers::{env::ENV, error::BoxError};
+use crate::models::general::llm::{APIResponse, ChatCompletion};
 
 pub(super) struct GptClient {
     headers: HeaderMap,
@@ -21,6 +22,25 @@ impl GptClient {
             .map_err(|e| -> BoxError { Box::new(e) })
     }
 
+    pub async fn get_response(
+        client: Client,
+        url: &str,
+        chat_completion: &ChatCompletion,
+    ) -> Result<APIResponse, BoxError> {
+        let res: APIResponse = client
+            .post(url)
+            .json(chat_completion)
+            .send()
+            .await
+            .map_err(|e| -> BoxError { Box::new(e) })?
+            .json()
+            .await?;
+
+        Ok(res)
+    }
+}
+
+impl GptClient {
     fn set_gpt_headers(&mut self) -> Result<(), BoxError> {
         let api_key = format!("Bearer {}", ENV::OPEN_AI_KEY.value());
         self.set_header("Content-Type", "application/json")?;
