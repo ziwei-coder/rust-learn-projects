@@ -1,56 +1,36 @@
 use reqwest::header::{HeaderMap, HeaderValue};
 use reqwest::Client;
 
-use crate::helpers::env::ENV;
+use crate::helpers::{env::ENV, error::BoxError};
 
 pub(super) struct GptClient {
     headers: HeaderMap,
 }
 
 impl GptClient {
-    pub fn client(self) -> Client {
-        Client::builder()
-            .default_headers(self.headers)
-            .build()
-            .unwrap()
-    }
-
-    pub fn new() -> Self {
+    pub fn client() -> Result<Client, BoxError> {
         let mut gpt = Self {
             headers: HeaderMap::new(),
         };
 
-        gpt.set_content_type();
-        gpt.set_api_key_header();
+        gpt.set_gpt_headers()?;
 
-        gpt
+        Client::builder()
+            .default_headers(gpt.headers)
+            .build()
+            .map_err(|e| -> BoxError { Box::new(e) })
     }
 
-    fn set_content_type(&mut self) {
-        self.headers.insert(
-            "Content-Type",
-            HeaderValue::from_str("application/json").unwrap(),
-        );
+    fn set_gpt_headers(&mut self) -> Result<(), BoxError> {
+        let api_key = format!("Bearer {}", ENV::OPEN_AI_KEY.value());
+        self.set_header("Content-Type", "application/json")?;
+        self.set_header("Authorization", &api_key)?;
+        Ok(())
     }
 
-    fn set_api_key_header(&mut self) {
-        // Extract API Key information
-        let api_key = &ENV::OPEN_AI_KEY.value();
-
-        self.headers.insert(
-            "Authorization",
-            HeaderValue::from_str(&format!("Bearer {api_key}")).unwrap(),
-        );
-    }
-
-    #[allow(unused)]
-    fn set_api_org_header(&mut self) {
-        // Extract API Key information
-        let api_key = &ENV::OPEN_AI_ORG.value();
-
-        self.headers.insert(
-            "OpenAI-organization",
-            HeaderValue::from_str(api_key).unwrap(),
-        );
+    fn set_header(&mut self, key: &'static str, val: &str) -> Result<(), BoxError> {
+        let val = HeaderValue::from_str(val).map_err(|e| -> BoxError { Box::new(e) })?;
+        self.headers.insert(key, val);
+        Ok(())
     }
 }
