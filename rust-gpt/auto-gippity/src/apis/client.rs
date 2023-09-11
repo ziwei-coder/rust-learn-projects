@@ -20,9 +20,17 @@ impl GptClient {
             headers: HeaderMap::new(),
         };
 
+        gpt.set_content_type();
         gpt.set_api_key_header();
-        gpt.set_api_org_header();
+
         gpt
+    }
+
+    fn set_content_type(&mut self) {
+        self.headers.insert(
+            "Content-Type",
+            HeaderValue::from_str("application/json").unwrap(),
+        );
     }
 
     fn set_api_key_header(&mut self) {
@@ -35,6 +43,7 @@ impl GptClient {
         );
     }
 
+    #[allow(unused)]
     fn set_api_org_header(&mut self) {
         // Extract API Key information
         let api_key = &ENV::OPEN_AI_ORG.value();

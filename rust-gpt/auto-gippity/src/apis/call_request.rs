@@ -1,6 +1,5 @@
 use crate::apis::client::GptClient;
-use crate::constants::gpt;
-use crate::helpers::env::ENV;
+use crate::helpers::{env::ENV, gpt};
 use crate::models::general::llm::{ChatCompletion, Message};
 
 //Call Large Language Model (i.e. GPT-4)
@@ -19,7 +18,7 @@ pub async fn call_gpt(messages: Vec<Message<'_>>) {
 
     // Troubleshooting
     let res_raw = client
-        .post(gpt::url)
+        .post(gpt::get_completions_url())
         .json(&chat_completion)
         .send()
         .await
