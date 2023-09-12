@@ -32,6 +32,7 @@ mod tests {
 
     use super::*;
 
+    ///! Run this test will cause money
     #[tokio::test]
     async fn test_call_to_openai() {
         let message = Message::new(
