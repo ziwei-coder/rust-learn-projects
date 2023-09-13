@@ -1,8 +1,10 @@
+use serde::de::DeserializeOwned;
+
+use crate::apis::call_request::call_gpt;
+use crate::helpers::command_line::PrintCommand;
+use crate::models::general::llm::Message;
+
 use super::env::ENV;
-use crate::{
-    apis::call_request::call_gpt, helpers::command_line::PrintCommand,
-    models::general::llm::Message,
-};
 
 pub enum Role {
     User,
@@ -18,6 +20,7 @@ impl Role {
     }
 }
 
+/// Get LLM completions url based on ENV `OPEN_AI_BASE_URL` setting
 pub fn get_completions_url() -> String {
     let base_url = ENV::OPEN_AI_BASE_URL.value();
     format!("{base_url}v1/chat/completions")
@@ -38,6 +41,7 @@ pub fn extend_ai_function(ai_func: fn(&str) -> &'static str, func_input: &str) -
     Message::new(Role::System.value(), msg)
 }
 
+/// Performs call to LLM GPT
 pub async fn ai_task_request(
     msg_content: String,
     agent_position: &str,
@@ -60,6 +64,22 @@ pub async fn ai_task_request(
             .await
             .expect("Failed twice to call LLM"),
     }
+}
+
+/// Performs call to LLM GPT - Decode
+pub async fn ai_task_request_decode<T: DeserializeOwned>(
+    msg_content: String,
+    agent_position: &str,
+    agent_operation: &str,
+    function_pass: fn(&str) -> &'static str,
+) -> T {
+    let llm_response =
+        ai_task_request(msg_content, agent_position, agent_operation, function_pass).await;
+
+    let response_decode: T = serde_json::from_str(llm_response.as_str())
+        .expect("Failed to decode ai response from serde_json");
+
+    response_decode
 }
 
 #[cfg(test)]

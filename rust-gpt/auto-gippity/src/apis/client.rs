@@ -4,7 +4,7 @@ use reqwest::Client;
 use crate::helpers::{env::ENV, error::BoxError};
 use crate::models::general::llm::{APIResponse, ChatCompletion};
 
-pub(super) struct GptClient {
+pub struct GptClient {
     headers: HeaderMap,
 }
 
