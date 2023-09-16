@@ -3,6 +3,7 @@
         "aifunc",
         "crossterm",
         "dotenv",
+        "factsheet",
         "openai",
         "reqwest",
         "supabase"
