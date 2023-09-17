@@ -43,13 +43,13 @@ pub fn extend_ai_function(ai_func: fn(&str) -> &'static str, func_input: &str) -
 
 /// Performs call to LLM GPT
 pub async fn ai_task_request(
-    msg_content: String,
+    msg_context: String,
     agent_position: &str,
     agent_operation: &str,
     function_pass: fn(&str) -> &'static str,
 ) -> String {
     // Extend AI function
-    let extend_msg = extend_ai_function(function_pass, &msg_content);
+    let extend_msg = extend_ai_function(function_pass, &msg_context);
 
     // Print current status
     PrintCommand::AICall.print_agent_message(agent_position, agent_operation);
@@ -68,13 +68,13 @@ pub async fn ai_task_request(
 
 /// Performs call to LLM GPT - Decode
 pub async fn ai_task_request_decode<T: DeserializeOwned>(
-    msg_content: String,
+    msg_context: String,
     agent_position: &str,
     agent_operation: &str,
     function_pass: fn(&str) -> &'static str,
 ) -> T {
     let llm_response =
-        ai_task_request(msg_content, agent_position, agent_operation, function_pass).await;
+        ai_task_request(msg_context, agent_position, agent_operation, function_pass).await;
 
     let response_decode: T = serde_json::from_str(llm_response.as_str())
         .expect("Failed to decode ai response from serde_json");

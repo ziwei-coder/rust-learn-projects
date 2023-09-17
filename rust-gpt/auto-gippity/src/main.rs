@@ -2,8 +2,8 @@ mod ai_functions;
 mod apis;
 mod constants;
 mod helpers;
+mod macros;
 mod models;
-
 use helpers::command_line;
 
 fn main() {

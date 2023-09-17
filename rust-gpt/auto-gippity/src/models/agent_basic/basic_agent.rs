@@ -11,10 +11,10 @@ pub enum AgentState {
 
 #[derive(Debug)]
 pub struct BasicAgent {
-    pub objective: String,
-    pub position: String,
-    pub state: AgentState,
-    pub memory: Vec<Message>,
+    objective: String,
+    position: String,
+    state: AgentState,
+    memory: Vec<Message>,
 }
 
 impl BasicTraits for BasicAgent {
