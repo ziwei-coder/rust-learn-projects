@@ -4,7 +4,7 @@ use crate::apis::call_request::call_gpt;
 use crate::helpers::command_line::PrintCommand;
 use crate::models::general::llm::Message;
 
-use super::env::ENV;
+use super::env::OpenAIEnv;
 
 pub enum Role {
     User,
@@ -22,7 +22,7 @@ impl Role {
 
 /// Get LLM completions url based on ENV `OPEN_AI_BASE_URL` setting
 pub fn get_completions_url() -> String {
-    let base_url = ENV::OPEN_AI_BASE_URL.value();
+    let base_url = OpenAIEnv::BaseUrl.value();
     format!("{base_url}v1/chat/completions")
 }
 
@@ -43,14 +43,14 @@ pub fn extend_ai_function(ai_func: fn(&str) -> &'static str, func_input: &str) -
 
 /// Performs call to LLM GPT
 pub async fn ai_task_request(
-    msg_context: String,
+    msg_context: &str,
     agent_position: &str,
     agent_operation: &str,
     function_pass: fn(&str) -> &'static str,
 ) -> String {
     // Extend AI function
-    let extend_msg = extend_ai_function(function_pass, &msg_context);
-    
+    let extend_msg = extend_ai_function(function_pass, msg_context);
+
     // Print current status
     PrintCommand::AICall.print_agent_message(agent_position, agent_operation);
 
@@ -68,7 +68,7 @@ pub async fn ai_task_request(
 
 /// Performs call to LLM GPT - Decode
 pub async fn ai_task_request_decode<T: DeserializeOwned>(
-    msg_context: String,
+    msg_context: &str,
     agent_position: &str,
     agent_operation: &str,
     function_pass: fn(&str) -> &'static str,
@@ -96,8 +96,6 @@ mod tests {
         assert!(url.len() > "v1/chat/completions".len());
     }
 
-    
-
     #[test]
     fn test_extend_ai_function() {
         let extended_msg = extend_ai_function(convert_user_input_to_goal, "dummy_variable");
@@ -108,8 +106,7 @@ mod tests {
     ///! Run this test will cause money
     #[tokio::test]
     async fn test_ai_task_request() {
-        let ai_func_param =
-            "Build me a web server for making stock price api requests.".to_string();
+        let ai_func_param = "Build me a web server for making stock price api requests.";
 
         let res = ai_task_request(
             ai_func_param,

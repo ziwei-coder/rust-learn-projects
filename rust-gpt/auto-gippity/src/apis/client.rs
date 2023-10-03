@@ -1,7 +1,7 @@
 use reqwest::header::{HeaderMap, HeaderValue};
 use reqwest::Client;
 
-use crate::helpers::{env::ENV, error::BoxError};
+use crate::helpers::{env::OpenAIEnv, error::BoxError};
 use crate::models::general::llm::{APIResponse, ChatCompletion};
 
 pub struct GptClient {
@@ -42,7 +42,7 @@ impl GptClient {
 
 impl GptClient {
     fn set_gpt_headers(&mut self) -> Result<(), BoxError> {
-        let api_key = format!("Bearer {}", ENV::OPEN_AI_KEY.value());
+        let api_key = format!("Bearer {}", OpenAIEnv::Key.value());
         self.set_header("Content-Type", "application/json")?;
         self.set_header("Authorization", &api_key)?;
         Ok(())

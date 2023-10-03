@@ -17,10 +17,22 @@ pub struct ProjectScope {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
-pub struct FactSheet {
+pub struct Factsheet {
     pub project_description: String,
     pub project_scope: Option<ProjectScope>,
     pub external_urls: Option<Vec<String>>,
     pub backend_code: Option<String>,
     pub api_end_point_schema: Option<Vec<RouteObject>>,
+}
+
+impl Factsheet {
+    pub fn new(description: String) -> Self {
+        Self {
+            project_description: description,
+            project_scope: None,
+            external_urls: None,
+            backend_code: None,
+            api_end_point_schema: None,
+        }
+    }
 }

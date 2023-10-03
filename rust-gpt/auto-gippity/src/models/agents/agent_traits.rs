@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use std::fmt::Debug;
 
 use crate::models::agent_basic::basic_agent::BasicAgent;
-use crate::models::agents::agent_structs::FactSheet;
+use crate::models::agents::agent_structs::Factsheet;
 
 #[async_trait]
 pub trait SpecialFunctions: Debug {
@@ -12,6 +12,6 @@ pub trait SpecialFunctions: Debug {
     /// This function will allow agents to execute their logic
     async fn execute(
         &mut self,
-        factsheet: &mut FactSheet,
+        factsheet: &mut Factsheet,
     ) -> Result<(), Box<dyn std::error::Error>>;
 }

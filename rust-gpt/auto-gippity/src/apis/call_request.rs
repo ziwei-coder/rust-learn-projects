@@ -1,5 +1,5 @@
 use crate::apis::client::GptClient;
-use crate::helpers::{env::ENV, error::BoxError, gpt};
+use crate::helpers::{env::OpenAIEnv, error::BoxError, gpt};
 use crate::models::general::llm::{ChatCompletion, Message};
 
 //Call Large Language Model (i.e. GPT-4)
@@ -10,7 +10,7 @@ pub async fn call_gpt(messages: Vec<Message>) -> Result<String, BoxError> {
     let client = GptClient::client()?;
 
     // Create chat completion
-    let model = ENV::OPEN_AI_MODEL.value();
+    let model = OpenAIEnv::Model.value();
     let chat_completion = ChatCompletion::new(model, messages, 0.1);
 
     // Troubleshooting
