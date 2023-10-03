@@ -1,3 +1,5 @@
+use async_trait::async_trait;
+
 use crate::ai_functions::aifunc_architect::{print_project_scope, print_site_urls};
 use crate::get_function_string;
 use crate::helpers::gpt::ai_task_request_decode;
@@ -7,7 +9,9 @@ use crate::models::agent_basic::{
 };
 
 use super::agent_structs::{FactSheet, ProjectScope};
+use super::agent_traits::SpecialFunctions;
 
+#[derive(Debug)]
 pub struct AgentSolutionArchitect {
     attributes: BasicAgent,
 }
@@ -54,5 +58,37 @@ impl AgentSolutionArchitect {
 
         factsheet.external_urls = Some(ai_response);
         self.attributes.update_state(AgentState::UnitTesting);
+    }
+}
+
+#[async_trait]
+impl SpecialFunctions for AgentSolutionArchitect {
+    fn get_attributes_from_agent(&self) -> &BasicAgent {
+        &self.attributes
+    }
+
+    async fn execute(
+        &mut self,
+        factsheet: &mut FactSheet,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        while self.attributes.get_state() != &AgentState::Finished {
+            match self.attributes.get_state() {
+                AgentState::Discovery => {
+                    let project_scope = self.call_project_scope(factsheet).await;
+
+                    // Confirm if external urls
+                    if project_scope.is_external_urls_required {
+                        self.call_determine_external_urls(
+                            factsheet,
+                            factsheet.project_description.clone(),
+                        )
+                        .await;
+                    }
+                }
+                AgentState::UnitTesting => {}
+                _ => self.attributes.update_state(AgentState::Finished),
+            }
+        }
+        todo!()
     }
 }

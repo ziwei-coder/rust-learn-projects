@@ -50,7 +50,7 @@ pub async fn ai_task_request(
 ) -> String {
     // Extend AI function
     let extend_msg = extend_ai_function(function_pass, &msg_context);
-
+    
     // Print current status
     PrintCommand::AICall.print_agent_message(agent_position, agent_operation);
 
@@ -95,6 +95,8 @@ mod tests {
         dbg!(&url);
         assert!(url.len() > "v1/chat/completions".len());
     }
+
+    
 
     #[test]
     fn test_extend_ai_function() {
