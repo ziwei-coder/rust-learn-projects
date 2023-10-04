@@ -21,6 +21,12 @@ pub fn save_backend_code(contents: &str) {
     fs::write(path, contents).expect("Failed to write backend code")
 }
 
+/// Read backend code
+pub fn read_backend_code() -> String {
+    let path = String::from(EXEC_MAIN_PATH);
+    fs::read_to_string(path).expect("Failed to read backend code")
+}
+
 /// Save Json API Endpoint Schema
 pub fn save_json_api_endpoints(api_endpoints: &str) {
     let path = String::from(API_SCHEMA_PATH);

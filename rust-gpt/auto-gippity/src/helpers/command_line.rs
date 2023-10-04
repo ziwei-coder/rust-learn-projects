@@ -9,7 +9,6 @@ use crossterm::{
 pub enum PrintCommand {
     AICall,
     UnitTest,
-    Issue,
 }
 
 impl PrintCommand {
@@ -20,7 +19,6 @@ impl PrintCommand {
         let statement_color = match self {
             Self::AICall => Color::Cyan,
             Self::UnitTest => Color::Magenta,
-            Self::Issue => Color::Red,
         };
 
         // print the agent statement in a specific color
@@ -54,6 +52,49 @@ pub fn get_user_response(question: &str) -> Result<String, Error> {
 
     // trim whitespace and return
     Ok(user_response.trim().to_string())
+}
+
+/// Get user response that is safe to execute
+pub fn confirm_safe_code() -> bool {
+    let mut stdout = stdout();
+
+    loop {
+        // Print the question in specified color
+        stdout.execute(SetForegroundColor(Color::Blue)).unwrap();
+        println!();
+        print!("WARNING: You are about to run code written entirely by AI. ");
+        println!("Review you code and confirm you wish to continue.");
+
+        // Reset color
+        stdout.execute(ResetColor).unwrap();
+
+        // Print Options with different colors
+        stdout.execute(SetForegroundColor(Color::Green)).unwrap();
+        println!("[1] All good");
+        stdout.execute(SetForegroundColor(Color::DarkRed)).unwrap();
+        println!("[2] Lets stop this project");
+
+        // Reset color
+        stdout.execute(ResetColor).unwrap();
+
+        // Read user input
+        let mut human_response = String::new();
+        stdin()
+            .read_line(&mut human_response)
+            .expect("Failed to read response");
+
+        // Trim whitespace an convert to lowercase
+        let human_response = human_response.trim().to_lowercase();
+
+        // Match Response
+        match human_response.as_str() {
+            "1" | "y" | "ok" => return true,
+            "2" | "n" | "no" => return false,
+            _ => {
+                println!("Invalid input. Please select '1' or '2'");
+            }
+        }
+    }
 }
 
 #[cfg(test)]

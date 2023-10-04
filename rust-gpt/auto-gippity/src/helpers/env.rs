@@ -2,6 +2,7 @@ pub enum OpenAIEnv {
     BaseUrl,
     Key,
     Model,
+    #[allow(dead_code)]
     Org,
 }
 

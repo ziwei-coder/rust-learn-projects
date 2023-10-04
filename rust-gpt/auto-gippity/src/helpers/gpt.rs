@@ -7,6 +7,7 @@ use crate::models::general::llm::Message;
 use super::env::OpenAIEnv;
 
 pub enum Role {
+    #[allow(dead_code)]
     User,
     System,
 }

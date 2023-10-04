@@ -4,11 +4,13 @@ use crate::helpers::gpt::ai_task_request;
 use crate::models::agent_basic::basic_agent::BasicAgent;
 use crate::models::agent_basic::basic_traits::BasicTraits;
 use crate::models::agents::agent_architect::AgentSolutionArchitect;
+use crate::models::agents::agent_backend::AgentBackendDeveloper;
 use crate::models::agents::agent_structs::Factsheet;
 use crate::models::agents::agent_traits::SpecialFunctions;
 
 #[derive(Debug)]
 pub struct ManagingAgent {
+    #[allow(dead_code)]
     attributes: BasicAgent,
     factsheet: Factsheet,
     agents: Vec<Box<dyn SpecialFunctions>>,
@@ -47,18 +49,17 @@ impl ManagingAgent {
 
     fn create_agents(&mut self) {
         self.add_agent(Box::new(AgentSolutionArchitect::new()));
-
-        // TODO add backend agent
+        self.add_agent(Box::new(AgentBackendDeveloper::new()));
     }
 
     pub async fn execute_projects(&mut self) {
         self.create_agents();
 
         for agent in &mut self.agents {
-            let agent_response = agent.execute(&mut self.factsheet).await;
-            let agent_info = agent.get_attributes_from_agent();
+            let _agent_response = agent.execute(&mut self.factsheet).await;
 
-            dbg!(agent_info);
+            // let agent_info = agent.get_attributes_from_agent();
+            // dbg!(agent_info);
         }
     }
 }
