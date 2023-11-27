@@ -1,0 +1,36 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug mars_calc",
+            "program": "${workspaceFolder}/crates/mars_calc/target/debug/mars_calc",
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'rust-syntax'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=rust-syntax",
+                    "--package=rust-syntax"
+                ],
+                "filter": {
+                    "name": "rust-syntax",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+
+    ]
+}
