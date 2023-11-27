@@ -1,5 +1,6 @@
 {
     "rust-analyzer.linkedProjects": [
-        "./crates/mars_calc/Cargo.toml"
+        "./crates/mars_calc/Cargo.toml",
+        "./crates/server/Cargo.toml",
     ]
 }

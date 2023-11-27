@@ -3,13 +3,5 @@
 version = 3
 
 [[package]]
-name = "mars_calc"
-version = "0.1.0"
-
-[[package]]
-name = "rust-syntax"
-version = "0.1.0"
-
-[[package]]
 name = "server"
 version = "0.1.0"
