@@ -1,20 +1,22 @@
 use std::io;
 
 fn main() {
+    println!("Please Entry your weight (kg): ");
+
     let mut input = String::new();
 
-    if let Ok(_) = io::stdin().read_line(&mut input) {
-        borrow_string(&input);
-        own_string(input);
-    }
-}
+    io::stdin()
+        .read_line(&mut input)
+        .expect("Failed to read input!");
 
-fn borrow_string(s: &String) {
-    println!("{s}");
-}
+    let weight = input
+        .trim()
+        .parse::<f32>()
+        .expect("Failed pares input to number!");
 
-fn own_string(s: String) {
-    println!("{s}");
+    let mars_weight = calculate_weight_on_mars(weight);
+
+    println!("The weight on mars: {}kg", mars_weight);
 }
 
 fn calculate_weight_on_mars(weight: f32) -> f32 {
