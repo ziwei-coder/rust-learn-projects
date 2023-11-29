@@ -7,8 +7,8 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug mars_calc",
-            "program": "${workspaceFolder}/crates/mars_calc/target/debug/mars_calc",
+            "name": "Debug Server",
+            "program": "${workspaceFolder}/target/debug/server",
             "args": [],
             "cwd": "${workspaceFolder}"
         },

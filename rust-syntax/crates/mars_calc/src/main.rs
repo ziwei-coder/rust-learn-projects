@@ -1,18 +1,18 @@
 use std::io;
 
 fn main() {
-    println!("Please Entry your weight (kg): ");
+    println!("Please entry your weight(kg): ");
 
     let mut input = String::new();
 
     io::stdin()
         .read_line(&mut input)
-        .expect("Failed to read input!");
+        .expect("Failed to read user input!");
 
     let weight = input
         .trim()
         .parse::<f32>()
-        .expect("Failed pares input to number!");
+        .expect("Failed to parse the input to a number!");
 
     let mars_weight = calculate_weight_on_mars(weight);
 
