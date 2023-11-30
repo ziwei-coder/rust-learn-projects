@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 
+#[derive(Debug)]
 pub enum Value<'buf> {
     Single(&'buf str),
     Multiple(Vec<&'buf str>),
 }
 
-// a=1&b=2&c&d=&e===&d=7&d=abc
+#[derive(Debug)]
 pub struct QueryString<'buf> {
     data: HashMap<&'buf str, Value<'buf>>,
 }
@@ -30,6 +31,7 @@ impl<'buf> QueryString<'buf> {
 }
 
 impl<'buf> From<&'buf str> for QueryString<'buf> {
+    // a=1&b=2&c&d=&e===&d=7&d=abc
     fn from(s: &'buf str) -> Self {
         let mut query_string = QueryString {
             data: HashMap::new(),

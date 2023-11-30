@@ -12,6 +12,7 @@ use crate::http::QueryString;
     BODY
 */
 
+#[derive(Debug)]
 pub struct Request<'buf> {
     path: &'buf str,
     query_string: Option<QueryString<'buf>>,
