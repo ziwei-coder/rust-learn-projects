@@ -20,7 +20,7 @@ pub struct Request<'buf> {
 
 impl<'buf> Request<'buf> {
     pub fn path(&self) -> &str {
-        &self.path
+        self.path
     }
 
     pub fn method(&self) -> &Method {
@@ -67,6 +67,8 @@ fn get_next_word(request: &str) -> Option<(&str, &str)> {
 
     None
 }
+
+
 
 fn get_path_query_string(path: &str) -> (&str, Option<QueryString>) {
     match path.find('?') {
