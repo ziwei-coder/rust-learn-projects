@@ -3,8 +3,7 @@ use std::error::Error;
 use std::fmt::{Debug, Display, Result as FmtResult};
 use std::str;
 
-use crate::http::method::{Method, MethodError};
-use crate::http::QueryString;
+use crate::http::{Method, MethodError, QueryString};
 
 /*
     GET /user?id=10 HTTP/1.1\r\n
@@ -17,6 +16,20 @@ pub struct Request<'buf> {
     path: &'buf str,
     query_string: Option<QueryString<'buf>>,
     method: Method,
+}
+
+impl<'buf> Request<'buf> {
+    pub fn path(&self) -> &str {
+        &self.path
+    }
+
+    pub fn method(&self) -> &Method {
+        &self.method
+    }
+
+    pub fn query_string(&self) -> Option<&QueryString> {
+        self.query_string.as_ref()
+    }
 }
 
 impl<'buf> TryFrom<&'buf [u8]> for Request<'buf> {
