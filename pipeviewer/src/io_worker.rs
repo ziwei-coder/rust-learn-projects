@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io::{self, BufReader, ErrorKind, Read, Result as IoResult, Write};
-use std::marker::Send;
-use std::sync::mpsc::{Receiver, Sender};
+
+use crossbeam::channel::{Receiver, Sender};
 
 use crate::{Args, CHUNK_SIZE};
 
@@ -14,7 +14,7 @@ impl IoWorker {
         Self { args }
     }
 
-    pub fn read_loop(&self, stats_tx: Sender<Vec<u8>>) -> IoResult<()> {
+    pub fn read_loop(&self, stats_tx: Sender<usize>, write_tx: Sender<Vec<u8>>) -> IoResult<()> {
         let mut buffer = [0; CHUNK_SIZE];
 
         loop {
@@ -24,22 +24,23 @@ impl IoWorker {
                 Ok(x) => x,
             };
 
-            // Send the buffer to the stats thread
-            let send = stats_tx.send(Vec::from(&buffer[..num_read]));
-            if send.is_err() {
+            // Send the stats to stats loop, and send the data to write loop
+            let _ = stats_tx.send(num_read);
+            if write_tx.send(Vec::from(&buffer[..num_read])).is_err() {
                 break;
             }
         }
 
-        // Send an empty buffer to the stats thread
-        let _ = stats_tx.send(Vec::new());
+        // Send the stats to stats loop, and send the data to write loop
+        let _ = stats_tx.send(0);
+        let _ = write_tx.send(Vec::new());
 
         Ok(())
     }
 
     pub fn write_loop(&self, write_rx: Receiver<Vec<u8>>) -> IoResult<()> {
         loop {
-            // Receive vector from stats thread
+            // Receive data from the read loop
             let buffer = write_rx.recv().unwrap();
 
             if buffer.is_empty() {
@@ -58,27 +59,19 @@ impl IoWorker {
         Ok(())
     }
 
-    pub fn stats_loop(
-        &self,
-        stats_rx: Receiver<Vec<u8>>,
-        write_tx: Sender<Vec<u8>>,
-    ) -> IoResult<()> {
+    pub fn stats_loop(&self, stats_rx: Receiver<usize>) -> IoResult<()> {
         let mut total_bytes = 0;
 
         loop {
-            // Receive the vector of bytes
-            let buffer = stats_rx.recv().unwrap();
-            let num_bytes = buffer.len();
-
+            // Receive the data bytes from the read loop
+            let num_bytes = stats_rx.recv().unwrap();
             total_bytes += num_bytes;
 
             if !self.is_silent() {
                 print!("\r{}", total_bytes);
             }
 
-            // Send vector to write loop
-            let send = write_tx.send(buffer);
-            if send.is_err() || num_bytes == 0 {
+            if num_bytes == 0 {
                 break;
             }
         }
@@ -116,5 +109,3 @@ impl IoWorker {
         self.args.silent
     }
 }
-
-unsafe impl Send for IoWorker {}
