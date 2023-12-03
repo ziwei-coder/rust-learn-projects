@@ -1,30 +1,20 @@
 use std::fs::File;
 use std::io::{self, BufReader, ErrorKind, Read, Result as IoResult, Write};
-use std::sync::{Arc, Mutex};
+use std::marker::Send;
+use std::sync::mpsc::{Receiver, Sender};
 
 use crate::{Args, CHUNK_SIZE};
 
 pub struct IoWorker {
     args: Args,
-    read_quit: Arc<Mutex<bool>>,
-    write_quit: Arc<Mutex<bool>>,
-    stats_quit: Arc<Mutex<bool>>,
 }
 
 impl IoWorker {
     pub fn new(args: Args) -> Self {
-        let quit = Arc::new(Mutex::new(false));
-        let (read_quit, write_quit, stats_quit) = (quit.clone(), quit.clone(), quit.clone());
-
-        Self {
-            args,
-            read_quit,
-            write_quit,
-            stats_quit,
-        }
+        Self { args }
     }
 
-    pub fn read_loop(&self) -> IoResult<()> {
+    pub fn read_loop(&self, stats_tx: Sender<Vec<u8>>) -> IoResult<()> {
         let mut buffer = [0; CHUNK_SIZE];
 
         loop {
@@ -34,29 +24,26 @@ impl IoWorker {
                 Ok(x) => x,
             };
 
-            // todo: send this buffer to the stats thread
-            let _data = Vec::from(&buffer[..num_read]);
+            // Send the buffer to the stats thread
+            let send = stats_tx.send(Vec::from(&buffer[..num_read]));
+            if send.is_err() {
+                break;
+            }
         }
 
-        // todo: send an empty buffer to the stats thread
-        let mut quit = self.read_quit.lock().unwrap();
-        *quit = true;
+        // Send an empty buffer to the stats thread
+        let _ = stats_tx.send(Vec::new());
 
         Ok(())
     }
 
-    pub fn write_loop(&self) -> IoResult<()> {
+    pub fn write_loop(&self, write_rx: Receiver<Vec<u8>>) -> IoResult<()> {
         loop {
-            // todo: receive vector from stats thread
-            let buffer: Vec<u8> = vec![];
+            // Receive vector from stats thread
+            let buffer = write_rx.recv().unwrap();
 
-            // If break drop the quit
-            {
-                let quit = self.write_quit.lock().unwrap();
-
-                if *quit {
-                    break;
-                }
+            if buffer.is_empty() {
+                break;
             }
 
             if let Err(e) = self.writer()?.write_all(&buffer) {
@@ -71,26 +58,35 @@ impl IoWorker {
         Ok(())
     }
 
-    pub fn stats_loop(&self) -> IoResult<()> {
+    pub fn stats_loop(
+        &self,
+        stats_rx: Receiver<Vec<u8>>,
+        write_tx: Sender<Vec<u8>>,
+    ) -> IoResult<()> {
         let mut total_bytes = 0;
 
         loop {
-            // todd: receive the vector of bytes
-            let buffer: Vec<u8> = vec![];
-            total_bytes += buffer.len();
+            // Receive the vector of bytes
+            let buffer = stats_rx.recv().unwrap();
+            let num_bytes = buffer.len();
 
-            if !self.args.silent {
-                println!("\r{}", total_bytes);
+            total_bytes += num_bytes;
+
+            if !self.is_silent() {
+                println!("\r Total bytes: {}", total_bytes);
             }
 
-            // todo: send vector to write loop
-            let quit = self.stats_quit.lock().unwrap();
-            if *quit {
+            // Send vector to write loop
+            let send = write_tx.send(buffer);
+            if send.is_err() || num_bytes == 0 {
                 break;
             }
         }
 
-        println!();
+        if !self.is_silent() {
+            println!();
+        }
+
         Ok(())
     }
 }
@@ -115,4 +111,10 @@ impl IoWorker {
             None => Ok(Box::new(io::stdout())),
         }
     }
+
+    fn is_silent(&self) -> bool {
+        self.args.silent
+    }
 }
+
+unsafe impl Send for IoWorker {}
