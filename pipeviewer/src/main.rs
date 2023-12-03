@@ -1,35 +1,25 @@
-use std::io::{Read, Result as IoResult, Write};
+use std::io::Result as IoResult;
 
-use crate::io_worker::IoWorker;
-use crate::matcher::Matcher;
-
-mod io_worker;
-mod matcher;
-
-const CHUNK_SIZE: usize = 16 * 1024;
+use pipeviewer::{stats, Args, IoWorker};
 
 fn main() -> IoResult<()> {
-    let matcher = Matcher::init();
-    let worker = IoWorker::new(&matcher);
+    let args = Args::init();
+    let worker = IoWorker::new(&args);
 
     let mut total_bytes = 0;
-    let mut buffer = [0; CHUNK_SIZE];
 
-    let num_read = match worker.reader()?.read(&mut buffer) {
-        Err(_) | Ok(0) => return Ok(()),
-        Ok(x) => x,
-    };
+    loop {
+        let buffer = match worker.read() {
+            Ok(x) if x.is_empty() => break,
+            Ok(x) => x,
+            Err(_) => break,
+        };
 
-    total_bytes += num_read;
+        stats(args.silent, buffer.len(), &mut total_bytes);
 
-    if !matcher.silent {
-        print!("\r{}", total_bytes);
-    }
-
-    worker.writer()?.write_all(&buffer[..num_read])?;
-
-    if !matcher.silent {
-        println!("\rtotal_bytes: {}", total_bytes);
+        if !worker.write(&buffer)? {
+            break;
+        };
     }
 
     Ok(())

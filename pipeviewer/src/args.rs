@@ -3,13 +3,13 @@ use std::ops::Deref;
 
 use clap::{App, Arg, ArgMatches};
 
-pub struct Matcher {
+pub struct Args {
     pub infile: Option<String>,
     pub outfile: Option<String>,
     pub silent: bool,
 }
 
-impl Matcher {
+impl Args {
     pub fn init() -> Self {
         let matches = Matches::new();
 
