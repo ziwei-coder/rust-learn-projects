@@ -3,6 +3,7 @@ use std::ops::Deref;
 
 use clap::{App, Arg, ArgMatches};
 
+#[derive(Clone)]
 pub struct Args {
     pub infile: Option<String>,
     pub outfile: Option<String>,
