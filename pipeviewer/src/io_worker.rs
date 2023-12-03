@@ -73,7 +73,7 @@ impl IoWorker {
             total_bytes += num_bytes;
 
             if !self.is_silent() {
-                println!("\r Total bytes: {}", total_bytes);
+                print!("\r{}", total_bytes);
             }
 
             // Send vector to write loop
