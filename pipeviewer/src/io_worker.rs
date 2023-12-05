@@ -1,8 +1,15 @@
 use std::fs::File;
-use std::io::{self, BufReader, ErrorKind, Read, Result as IoResult, Write};
+use std::io::{self, BufReader, ErrorKind, Read, Result as IoResult, Stderr, Write};
+use std::time::Instant;
 
 use crossbeam::channel::{Receiver, Sender};
+use crossterm::{
+    cursor, execute,
+    style::{self, Color, PrintStyledContent},
+    terminal::{Clear, ClearType},
+};
 
+use crate::timer::{TimeOutput, Timer};
 use crate::{Args, CHUNK_SIZE};
 
 pub struct IoWorker {
@@ -61,14 +68,27 @@ impl IoWorker {
 
     pub fn stats_loop(&self, stats_rx: Receiver<usize>) -> IoResult<()> {
         let mut total_bytes = 0;
+        let start = Instant::now();
+        let mut timer = Timer::new();
+        let mut stderr = io::stderr();
 
         loop {
             // Receive the data bytes from the read loop
             let num_bytes = stats_rx.recv().unwrap();
             total_bytes += num_bytes;
 
-            if !self.is_silent() {
-                print!("\r{}", total_bytes);
+            timer.update();
+            let rate_per_second = num_bytes as f64 / timer.delta.as_secs_f64();
+
+            if !self.is_silent() && timer.ready {
+                timer.ready = false;
+
+                output_progress(
+                    &mut stderr,
+                    total_bytes,
+                    start.elapsed().as_secs().as_time(),
+                    rate_per_second,
+                );
             }
 
             if num_bytes == 0 {
@@ -82,6 +102,20 @@ impl IoWorker {
 
         Ok(())
     }
+}
+
+fn output_progress(stderr: &mut Stderr, bytes: usize, elapsed: String, rate: f64) {
+    let bytes = style::style(format!("{} ", bytes)).with(Color::Red);
+    let elapsed = style::style(elapsed).with(Color::Green);
+    let rate = style::style(format!(" [{:.0}b/s]", rate)).with(Color::Blue);
+    let _ = execute!(
+        stderr,
+        cursor::MoveToColumn(0),
+        Clear(ClearType::CurrentLine),
+        PrintStyledContent(bytes),
+        PrintStyledContent(elapsed),
+        PrintStyledContent(rate),
+    );
 }
 
 impl IoWorker {
