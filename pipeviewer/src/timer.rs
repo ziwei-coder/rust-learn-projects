@@ -43,3 +43,22 @@ impl Timer {
         });
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::TimeOutput;
+
+    #[test]
+    fn test_as_time() {
+        let pairs = vec![
+            (5_u64, "0:00:05"),
+            (60_u64, "0:01:00"),
+            (154_u64, "0:02:34"),
+            (3603_u64, "1:00:03"),
+        ];
+
+        for (input, output) in pairs {
+            assert_eq!(input.as_time(), output);
+        }
+    }
+}
