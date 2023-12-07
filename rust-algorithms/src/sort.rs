@@ -1,4 +1,6 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, sync::Mutex};
+
+use crate::rand;
 
 pub trait Sort<T: PartialOrd + Debug> {
     fn bubble_sort(&mut self);
@@ -47,6 +49,9 @@ impl<T: PartialOrd + Debug> Sort<T> for &mut [T] {
 }
 
 fn pivot<T: PartialOrd>(data: &mut [T]) -> usize {
+    let r = rand::rand_gen(data.len());
+    data.swap(r, 0);
+
     let mut p = 0;
 
     for i in 1..data.len() {
