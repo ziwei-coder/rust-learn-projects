@@ -4,14 +4,17 @@ pub trait Sort<T: PartialOrd + Debug> {
     fn bubble(&mut self);
 }
 
+pub trait MergeSort<T: PartialOrd + Debug> {
+    fn merge(self) -> Vec<T>;
+}
+
 impl<T: PartialOrd + Debug> Sort<T> for &mut [T] {
     fn bubble(&mut self) {
         let len = self.len();
 
-        let mut sorted = true;
-
         for p in 0..len {
             println!("{:?}", &self);
+            let mut sorted = true;
 
             for i in 0..len - 1 - p {
                 if self[i] > self[i + 1] {
@@ -27,8 +30,66 @@ impl<T: PartialOrd + Debug> Sort<T> for &mut [T] {
     }
 }
 
+impl<T: PartialOrd + Debug> MergeSort<T> for Vec<T> {
+    fn merge(self) -> Vec<T> {
+        merge_sort_handle(self)
+    }
+}
+
+fn merge_sort_handle<T: PartialOrd + Debug>(mut data: Vec<T>) -> Vec<T> {
+    let len = data.len();
+
+    if len <= 1 {
+        return data;
+    }
+
+    println!("{:?}", &data);
+
+    // recurse
+    let right = data.split_off(len / 2);
+    let left = merge_sort_handle(data);
+    let right = merge_sort_handle(right);
+
+    // merge
+    let mut result = Vec::with_capacity(len / 2 + 1);
+    let mut left_iter = left.into_iter();
+    let mut right_iter = right.into_iter();
+    let mut left_peek = left_iter.next();
+    let mut right_peek = right_iter.next();
+
+    loop {
+        match left_peek {
+            Some(ref left) => match right_peek {
+                None => {
+                    result.push(left_peek.take().unwrap());
+                    result.extend(left_iter);
+                    return result;
+                }
+                Some(ref right) => {
+                    if left <= right {
+                        result.push(left_peek.take().unwrap());
+                        left_peek = left_iter.next();
+                    } else {
+                        result.push(right_peek.take().unwrap());
+                        right_peek = right_iter.next();
+                    }
+                }
+            },
+            None => {
+                if let Some(val) = right_peek {
+                    result.push(val);
+                }
+                result.extend(right_iter);
+                return result;
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use crate::sort::MergeSort;
+
     use super::Sort;
 
     #[test]
@@ -36,6 +97,14 @@ mod tests {
         // let mut data = vec![4, 6, 1, 8, 11, 13, 3];
         let mut data = vec![1, 3, 4, 6, 8, 11, 13];
         data.as_mut_slice().bubble();
+
+        assert_eq!(data, vec![1, 3, 4, 6, 8, 11, 13]);
+    }
+
+    #[test]
+    fn test_merge_sort() {
+        let data = vec![4, 6, 1, 8, 11, 13, 3];
+        let data = data.merge();
 
         assert_eq!(data, vec![1, 3, 4, 6, 8, 11, 13]);
     }
