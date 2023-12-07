@@ -1,19 +1,21 @@
 use std::fmt::Debug;
 
 pub trait Sort<T: PartialOrd + Debug> {
-    fn bubble(&mut self);
+    fn bubble_sort(&mut self);
+    fn quick_sort(&mut self);
 }
 
 pub trait MergeSort<T: PartialOrd + Debug> {
-    fn merge(self) -> Vec<T>;
+    fn merge_sort(self) -> Vec<T>;
 }
 
 impl<T: PartialOrd + Debug> Sort<T> for &mut [T] {
-    fn bubble(&mut self) {
+    fn bubble_sort(&mut self) {
         let len = self.len();
 
         for p in 0..len {
-            println!("{:?}", &self);
+            println!("{:?}", self);
+
             let mut sorted = true;
 
             for i in 0..len - 1 - p {
@@ -28,10 +30,38 @@ impl<T: PartialOrd + Debug> Sort<T> for &mut [T] {
             }
         }
     }
+
+    fn quick_sort(&mut self) {
+        if self.len() <= 1 {
+            return;
+        }
+
+        println!("{:?}", self);
+
+        let p = pivot(self);
+        let (mut left, right) = self.split_at_mut(p);
+
+        left.quick_sort();
+        (&mut right[1..]).quick_sort(); // the middle element is already sorted
+    }
+}
+
+fn pivot<T: PartialOrd>(data: &mut [T]) -> usize {
+    let mut p = 0;
+
+    for i in 1..data.len() {
+        if data[i] < data[p] {
+            data.swap(p + 1, i);
+            data.swap(p, p + 1);
+            p += 1;
+        }
+    }
+
+    p
 }
 
 impl<T: PartialOrd + Debug> MergeSort<T> for Vec<T> {
-    fn merge(self) -> Vec<T> {
+    fn merge_sort(self) -> Vec<T> {
         merge_sort_handle(self)
     }
 }
@@ -88,15 +118,14 @@ fn merge_sort_handle<T: PartialOrd + Debug>(mut data: Vec<T>) -> Vec<T> {
 
 #[cfg(test)]
 mod tests {
-    use crate::sort::MergeSort;
 
-    use super::Sort;
+    use super::*;
 
     #[test]
     fn test_bubble_sort() {
         // let mut data = vec![4, 6, 1, 8, 11, 13, 3];
         let mut data = vec![1, 3, 4, 6, 8, 11, 13];
-        data.as_mut_slice().bubble();
+        data.as_mut_slice().bubble_sort();
 
         assert_eq!(data, vec![1, 3, 4, 6, 8, 11, 13]);
     }
@@ -104,8 +133,26 @@ mod tests {
     #[test]
     fn test_merge_sort() {
         let data = vec![4, 6, 1, 8, 11, 13, 3];
-        let data = data.merge();
+        let data = data.merge_sort();
 
         assert_eq!(data, vec![1, 3, 4, 6, 8, 11, 13]);
+    }
+
+    #[test]
+    fn test_pivot() {
+        let mut data = vec![4, 0, 6, 1, 8, 11, 13, 3];
+        let p = pivot(&mut data);
+
+        for i in 0..data.len() {
+            assert!((data[i] < data[p]) == (i < p))
+        }
+    }
+
+    #[test]
+    fn test_quick_sort() {
+        let mut data = vec![4, 0, 6, 1, 8, 11, 13, 3];
+        data.as_mut_slice().quick_sort();
+
+        assert_eq!(data, vec![0, 1, 3, 4, 6, 8, 11, 13])
     }
 }
