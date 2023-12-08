@@ -11,6 +11,10 @@ pub trait MergeSort<T: PartialOrd + Debug> {
     fn merge_sort(self) -> Vec<T>;
 }
 
+pub trait RayonSort<T: PartialOrd + Send + Debug> {
+    fn quick_sort_rayon(&mut self);
+}
+
 impl<T: PartialOrd + Debug> Sort<T> for &mut [T] {
     fn bubble_sort(&mut self) {
         let len = self.len();
@@ -38,13 +42,38 @@ impl<T: PartialOrd + Debug> Sort<T> for &mut [T] {
             return;
         }
 
+        println!("pre = {:?}", self);
+
         println!("{:?}", self);
+
+        println!("pos = {:?}", self);
 
         let p = pivot(self);
         let (mut left, right) = self.split_at_mut(p);
 
         left.quick_sort();
         (&mut right[1..]).quick_sort(); // the middle element is already sorted
+    }
+}
+
+impl<T: PartialOrd + Send + Debug> RayonSort<T> for &mut [T] {
+    fn quick_sort_rayon(&mut self) {
+        if self.len() <= 1 {
+            return;
+        }
+
+        println!("pre = {:?}", self);
+
+        let p = pivot(self);
+
+        println!("pos = {:?}", self);
+
+        let (mut left, right) = self.split_at_mut(p);
+
+        rayon::join(
+            || left.quick_sort_rayon(),
+            || (&mut right[1..]).quick_sort_rayon(),
+        );
     }
 }
 
@@ -157,6 +186,14 @@ mod tests {
     fn test_quick_sort() {
         let mut data = vec![4, 0, 6, 1, 8, 11, 13, 3];
         data.as_mut_slice().quick_sort();
+
+        assert_eq!(data, vec![0, 1, 3, 4, 6, 8, 11, 13])
+    }
+
+    #[test]
+    fn test_quick_sort_rayon() {
+        let mut data = vec![4, 0, 6, 1, 8, 11, 13, 3];
+        data.as_mut_slice().quick_sort_rayon();
 
         assert_eq!(data, vec![0, 1, 3, 4, 6, 8, 11, 13])
     }
